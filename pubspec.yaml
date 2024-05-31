@@ -1,0 +1,28 @@
+name: do_ve_so
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.3.3 <4.0.0'
+
+dependencies:
+  bottom_navbar_with_indicator: ^0.0.8
+  community_material_icon: ^5.9.55
+  flutter:
+    sdk: flutter
+  flutter_screenutil: ^5.9.1
+  flutter_bloc: ^8.1.5
+  bloc: ^8.1.4
+  equatable: ^2.0.5
+  image_picker: ^1.1.1
+  google_ml_kit: ^0.18.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
