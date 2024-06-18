@@ -1,6 +1,7 @@
 import 'package:do_ve_so/component/ItemHome.dart';
 import 'package:do_ve_so/component/ItemVietLot.dart';
 import 'package:do_ve_so/mien_bac/mien_bac_screen.dart';
+import 'package:do_ve_so/viet_lot_645/xoso_mega.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -61,8 +62,7 @@ class VietLotHome extends StatelessWidget {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => const MienBacScreen()),
+                          MaterialPageRoute(builder: (context) => MegaScreen()),
                         );
                       },
                       child: Container(
@@ -104,7 +104,7 @@ class VietLotHome extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const MienBacScreen()),
+                              builder: (context) => MienBacScreen()),
                         );
                       },
                       child: ItemvietLot(
@@ -119,69 +119,69 @@ class VietLotHome extends StatelessWidget {
               SizedBox(
                 height: 10.h,
               ),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 3,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MienBacScreen()),
-                        );
-                      },
-                      child: Container(
-                        child: Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: const ItemvietLot(
-                            image: "assets/images/645rmv.png",
-                            textName: "Mega",
+              // Row(
+              //   children: <Widget>[
+              //     Expanded(
+              //       flex: 3,
+              //       child: GestureDetector(
+              //         onTap: () {
+              //           Navigator.push(
+              //             context,
+              //             MaterialPageRoute(
+              //                 builder: (context) => MienBacScreen()),
+              //           );
+              //         },
+              //         child: Container(
+              //           child: Padding(
+              //             padding: const EdgeInsets.all(5.0),
+              //             child: const ItemvietLot(
+              //               image: "assets/images/645rmv.png",
+              //               textName: "Mega",
 
-                            // colorBGIc: Colors.purple,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    MienBacScreen())); // Chang
-                      },
-                      child: const ItemvietLot(
-                        image: "assets/images/logovietlot.png",
+              //               // colorBGIc: Colors.purple,
+              //             ),
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //     Expanded(
+              //       flex: 3,
+              //       child: GestureDetector(
+              //         onTap: () {
+              //           Navigator.push(
+              //               context,
+              //               MaterialPageRoute(
+              //                   builder: (context) =>
+              //                       MienBacScreen())); // Chang
+              //         },
+              //         child: const ItemvietLot(
+              //           image: "assets/images/logovietlot.png",
 
-                        textName: "Power",
+              //           textName: "Power",
 
-                        // colorBGIc: Colors.purple,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MienBacScreen()),
-                        );
-                      },
-                      child: ItemvietLot(
-                        image: "assets/images/kenormv.png",
-                        textName: "Keno",
-                        // colorBGIc: Colors.purple,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              //           // colorBGIc: Colors.purple,
+              //         ),
+              //       ),
+              //     ),
+              //     Expanded(
+              //       flex: 3,
+              //       child: GestureDetector(
+              //         onTap: () {
+              //           Navigator.push(
+              //             context,
+              //             MaterialPageRoute(
+              //                 builder: (context) => MienBacScreen()),
+              //           );
+              //         },
+              //         child: ItemvietLot(
+              //           image: "assets/images/kenormv.png",
+              //           textName: "Keno",
+              //           // colorBGIc: Colors.purple,
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
               SizedBox(
                 height: 10.h,
               ),

@@ -26,14 +26,14 @@ class HomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(30.r),
                       bottomRight: Radius.circular(30.r)),
-                  image: DecorationImage(
+                  image: const DecorationImage(
                       image: AssetImage("assets/images/bghome2.png"),
                       fit: BoxFit.cover)),
             ),
           ),
         ),
         body: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Container(
             color: Colors.amber[50],
             child: Column(
@@ -41,11 +41,8 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(
                   height: 10.h,
                 ),
-                KienThietHome(),
-                VietLotHome(),
-                SizedBox(
-                  height: 50.h,
-                ),
+                const KienThietHome(),
+                const VietLotHome(),
               ],
             ),
           ),

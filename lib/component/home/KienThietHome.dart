@@ -1,5 +1,7 @@
 import 'package:do_ve_so/component/ItemHome.dart';
 import 'package:do_ve_so/mien_bac/mien_bac_screen.dart';
+import 'package:do_ve_so/mien_nam/mien_nam_screen.dart';
+import 'package:do_ve_so/mien_trung/mien_trung_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -60,7 +62,7 @@ class KienThietHome extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const MienBacScreen()),
+                              builder: (context) => MienBacScreen()),
                         );
                       },
                       child: const ItemHome(
@@ -79,7 +81,7 @@ class KienThietHome extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    MienBacScreen())); // Chang
+                                    MienTrungScreen())); // Chang
                       },
                       child: const ItemHome(
                         image: "assets/images/trung.png",
@@ -97,7 +99,7 @@ class KienThietHome extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const MienBacScreen()),
+                              builder: (context) => MienNamScreen()),
                         );
                       },
                       child: ItemHome(

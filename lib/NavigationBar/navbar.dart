@@ -1,15 +1,15 @@
 import 'dart:io';
 
 import 'package:bottom_navbar_with_indicator/bottom_navbar_with_indicator.dart';
-import 'package:community_material_icon/community_material_icon.dart';
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:do_ve_so/home/home.dart';
 import 'package:do_ve_so/info/info.dart';
-import 'package:do_ve_so/mien_bac/mien_bac_screen.dart';
+
 import 'package:do_ve_so/scan/scan_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 
@@ -21,24 +21,25 @@ class NavigationHome extends StatefulWidget {
 }
 
 class _NavigationHomeState extends State<NavigationHome> {
-  bool textScanning = false;
-  XFile? imageFile;
-  String scannedText = "";
-  void getImage() async {
+  File? selectedMedia;
+
+  void onPressed() async {
     try {
-      final pickedImage =
-          await ImagePicker().pickImage(source: ImageSource.gallery);
-      if (pickedImage != null) {
-        textScanning = true;
-        imageFile = pickedImage;
-        setState(() {});
-      }
-    } catch (e) {
-      textScanning = true;
-      imageFile = null;
+      final pictures = await CunningDocumentScanner.getPictures(
+              isGalleryImportAllowed: true) ??
+          [];
+      if (!mounted) return;
       setState(() {
-        scannedText = "Error occured while scanning";
+        selectedMedia = File(pictures.join());
       });
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ScanScreen(imageFile: selectedMedia!),
+        ),
+      );
+    } catch (exception) {
+      // Handle exception here
     }
   }
 
@@ -86,123 +87,19 @@ class _NavigationHomeState extends State<NavigationHome> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Builder(builder: (context) {
-        return Container(
+        return SizedBox(
           height: 80.0.h, //
           width: 80.0.w, //
           child: FloatingActionButton(
               backgroundColor: Colors.white,
               elevation: 0,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ScanScreen()),
-                );
-                // showModalBottomSheet<void>(
-                //   context: context,
-                //   isScrollControlled: true,
-                //   builder: (BuildContext context) {
-                //     return Container(
-                //       height: 700.h,
-                //       decoration: BoxDecoration(
-                //         borderRadius:
-                //             BorderRadius.vertical(top: Radius.circular(20.r)),
-                //         color: Colors.white,
-                //       ),
-                //       child: Column(
-                //         children: [
-                //           Expanded(
-                //               flex: 8,
-                //               child: Container(
-                //                 child: Padding(
-                //                   padding: REdgeInsets.symmetric(
-                //                       horizontal: 10.r, vertical: 30.h),
-                //                   child: Container(
-                //                     color: Colors.grey[200],
-                //                   ),
-                //                 ),
-                //               )),
-                //           Flexible(
-                //             flex: 2,
-                //             child: Row(
-                //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                //               crossAxisAlignment: CrossAxisAlignment.center,
-                //               children: [
-                //                 Container(
-                //                   height: 100,
-                //                   width: 100,
-                //                   color: Colors.amber,
-                //                 ),
-                //                 // Container(
-                //                 //   decoration: BoxDecoration(
-                //                 //     borderRadius: BorderRadius.circular(10),
-                //                 //     color: Colors.amber,
-                //                 //     boxShadow: [
-                //                 //       BoxShadow(
-                //                 //         color: Colors.grey.withOpacity(0.5),
-                //                 //         spreadRadius: 5,
-                //                 //         blurRadius: 7,
-                //                 //         offset: Offset(0,
-                //                 //             3), // changes position of shadow
-                //                 //       ),
-                //                 //     ],
-                //                 //   ),
-                //                 //   child: Padding(
-                //                 //     padding: REdgeInsets.all(8.0.r),
-                //                 //     child: Column(
-                //                 //       children: [
-                //                 //         Container(
-                //                 //           height: 50.h,
-                //                 //           width: 50.w,
-                //                 //           decoration: BoxDecoration(
-                //                 //               image: DecorationImage(
-                //                 //                   image: AssetImage(
-                //                 //                       "assets/images/photo.png"))),
-                //                 //         ),
-                //                 //         Text("Thư viện")
-                //                 //       ],
-                //                 //     ),
-                //                 //   ),
-                //                 // ),
-                //                 Container(
-                //                   decoration: BoxDecoration(
-                //                     borderRadius: BorderRadius.circular(10),
-                //                     color: Colors.white,
-                //                     boxShadow: [
-                //                       BoxShadow(
-                //                         color: Colors.grey.withOpacity(0.5),
-                //                         spreadRadius: 5,
-                //                         blurRadius: 7,
-                //                         offset: Offset(
-                //                             0, 3), // changes position of shadow
-                //                       ),
-                //                     ],
-                //                   ),
-                //                   child: Padding(
-                //                     padding: REdgeInsets.all(8.0.r),
-                //                     child: Column(
-                //                       children: [
-                //                         Container(
-                //                           height: 50.h,
-                //                           width: 50.w,
-                //                           decoration: BoxDecoration(
-                //                               image: DecorationImage(
-                //                                   image: AssetImage(
-                //                                       "assets/images/pick_photo.png"))),
-                //                         ),
-                //                         Text("Máy ảnh")
-                //                       ],
-                //                     ),
-                //                   ),
-                //                 )
-                //               ],
-                //             ),
-                //           ),
-                //         ],
-                //       ),
-                //     );
-                //   },
-                // );
-              },
+              // onPressed: () {
+              //   Navigator.push(
+              //     context,
+              //     MaterialPageRoute(builder: (context) => const ScanScreen()),
+              //   );
+              // },
+              onPressed: onPressed,
               shape: RoundedRectangleBorder(
                 side: BorderSide(
                   width: 4.w,
@@ -213,7 +110,7 @@ class _NavigationHomeState extends State<NavigationHome> {
               child: Container(
                 height: 50.h,
                 width: 50.w,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                     image: DecorationImage(
                         image: AssetImage("assets/images/qr-scan.png"))),
               )),
