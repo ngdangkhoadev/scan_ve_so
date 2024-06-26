@@ -1,15 +1,10 @@
-import 'dart:ui';
+import 'dart:developer';
+import 'package:do_ve_so/component/config/const.dart';
+import 'package:do_ve_so/mien_bac/mien_bac_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
-import 'package:community_material_icon/community_material_icon.dart';
-import 'package:do_ve_so/component/DateInputWidget.dart';
-import 'package:do_ve_so/component/Dropdown.dart';
-import 'package:do_ve_so/component/XoSo.dart';
-import 'package:do_ve_so/component/config/const.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MienNamScreen extends StatefulWidget {
   const MienNamScreen({super.key});
@@ -19,23 +14,34 @@ class MienNamScreen extends StatefulWidget {
 }
 
 class _MienNamScreenState extends State<MienNamScreen> {
+  late Future<List<Map<String, dynamic>>> _fetchLotteryResults;
+  String? selectedNgay;
+  String? selectedProvince;
+  late List<Map<String, dynamic>> allResults = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLotteryResults = fetchLotteryResults();
+  }
+
   Future<List<Map<String, dynamic>>> fetchLotteryResults() async {
     final response = await http
         .get(Uri.parse('https://xskt.com.vn/rss-feed/mien-nam-xsmn.rss'));
-
     if (response.statusCode == 200) {
       final document = xml.XmlDocument.parse(response.body);
       final items = document.findAllElements('item');
 
       return items.map((item) {
-        final title = item.findElements('title').single.text;
-        final description = item.findElements('description').single.text;
-        final link = item.findElements('link').single.text;
-        final pubDate = item.findElements('pubDate').single.text;
+        final title = item.findElements('title').single.innerText;
+        final ngay = extractDateFromTitle(title);
+        final description = item.findElements('description').single.innerText;
+        final link = item.findElements('link').single.innerText;
+        final pubDate = item.findElements('pubDate').single.innerText;
         final prizes = _parsePrizes(description);
 
         return {
-          'title': title,
+          'ngay': ngay,
           'prizes': prizes,
           'link': link,
           'pubDate': pubDate,
@@ -47,33 +53,46 @@ class _MienNamScreenState extends State<MienNamScreen> {
   }
 
   Map<String, Map<String, List<String>>> _parsePrizes(String description) {
-    final prizeLines = description.trim().split('[');
     final prizes = <String, Map<String, List<String>>>{};
+    const provincePattern = ('['); // Pattern to find province names
+    final prizeLines = description.split(provincePattern);
 
-    for (var line in prizeLines) {
-      if (line.contains(']')) {
-        final parts = line.split(']');
-        final region = parts[0].trim();
-        final prizeData = parts[1].trim().split('\n');
-        final regionPrizes = <String, List<String>>{};
+    for (String line in prizeLines) {
+      if (line.trim().isEmpty) continue;
 
-        for (var prizeLine in prizeData) {
-          final prizeParts = prizeLine.split(':');
-          if (prizeParts.length == 2) {
-            final prizeType = prizeParts[0].trim();
-            final prizeNumbers = prizeParts[1].trim().split(' - ');
-            regionPrizes[prizeType] = prizeNumbers;
+      List<String> parts = line.split(']');
+      String regionName = parts[0].trim();
+      String dataPart = parts[1].trim();
+      dataPart = dataPart.replaceAll("8:", " 8:");
+      prizes[regionName] = <String, List<String>>{};
+      List<String> entries = dataPart.split(RegExp(r'\s(?=\d+:|\d+-)'));
+      print(regionName);
+      for (String entry in entries) {
+        if (entry.contains(':')) {
+          List<String> keyValue = entry.split(':');
+          String key = keyValue[0].trim();
+          String value = keyValue[1].trim();
+          if (value.contains('-')) {
+            prizes[regionName]![key] =
+                value.split(' - ').map((e) => e.trim()).toList();
+          } else {
+            prizes[regionName]![key] = [value];
           }
         }
-        prizes[region] = regionPrizes;
       }
     }
 
     return prizes;
   }
 
-  String? selectedTinh;
-  final TextEditingController DateController = TextEditingController();
+  String extractDateFromTitle(String title) {
+    int startIndex = title.indexOf("NGÀY");
+    if (startIndex != -1) {
+      return title.substring(startIndex).trim();
+    }
+    return title;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -83,715 +102,187 @@ class _MienNamScreenState extends State<MienNamScreen> {
           title: const Text("Xổ Số Miền Nam"),
           flexibleSpace: Container(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [
-                Color(0xfffed758),
-                Color(0xffffb653),
-                Color(0xffffa04e),
-              ], begin: Alignment.centerLeft, end: Alignment.centerRight),
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xfffed758),
+                  Color(0xffffb653),
+                  Color(0xffffa04e),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
             ),
           ),
         ),
-        body: SingleChildScrollView(
-          child: Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(20.r),
-                          bottomRight: Radius.circular(20.r)),
-                      image: const DecorationImage(
-                          image: AssetImage("assets/images/bg.jpg"),
-                          fit: BoxFit.cover)),
-                  child: Padding(
-                    padding: REdgeInsets.all(10.sp),
-                    child: Column(
-                      children: [
-                        Center(
-                          child: Image(
-                            height: 100.h,
-                            width: 300.w,
-                            image: const AssetImage(
-                                "assets/images/kk-removebg-preview.png"),
-                          ),
-                        ),
-                        Padding(
-                          padding: REdgeInsets.symmetric(horizontal: 20.sp),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10.r)),
-                            child: Padding(
-                              padding: REdgeInsets.all(15.0.sp),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        flex: 8,
-                                        child: TextFormField(
-                                          onChanged: (value) {},
-                                          keyboardType: TextInputType.number,
-                                          //bắt sự kiện nhập
-                                          maxLines: null,
-                                          style: TextStyle(
-                                              fontSize: 12.sp,
-                                              color: Colors.black),
-                                          cursorColor: Colors.black,
+        body: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _fetchLotteryResults,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No lottery results found'));
+            } else {
+              allResults = snapshot.data!;
+              final dates =
+                  allResults.map((result) => result['ngay'] as String).toList();
 
-                                          decoration: InputDecoration(
-                                            isDense: true,
-                                            fillColor: Colors.white,
-                                            hintText: "Nhập 6 số trên vé",
-                                            enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(5.r),
-                                                borderSide: BorderSide(
-                                                    width: 0.7.w,
-                                                    color:
-                                                        Colors.grey.shade500)),
-                                            disabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(5.r),
-                                                borderSide: BorderSide(
-                                                    width: 0.7.w,
-                                                    color:
-                                                        Colors.grey.shade500)),
-                                            focusedBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(5.r),
-                                                borderSide: BorderSide(
-                                                    width: 0.7.w,
-                                                    color:
-                                                        Colors.grey.shade500)),
-                                            hintStyle: TextStyle(
-                                                fontSize: 12.sp,
-                                                color: Colors.grey),
-                                            contentPadding:
-                                                REdgeInsets.symmetric(
-                                                    horizontal: 10.w,
-                                                    vertical: 15.h),
+              // Đảm bảo selectedNgay được đặt ban đầu là mục đầu tiên
+              selectedNgay ??= dates.first;
+
+              // Lấy kết quả xổ số cho ngày đã chọn
+              final selectedResult = allResults.firstWhere(
+                (result) => result['ngay'] == selectedNgay,
+              );
+
+              final prizes = selectedResult['prizes']
+                  as Map<String, Map<String, List<String>>>;
+
+              // Lấy danh sách các tỉnh/thành phố
+              final provincesList = prizes.keys.toList();
+
+              // Đặt selectedProvince mặc định là tỉnh đầu tiên của ngày đã chọn
+              selectedProvince ??= provincesList.first;
+
+              // Lọc prizes dựa trên tỉnh/thành phố đã chọn
+              final filteredPrizes = selectedProvince != null
+                  ? {selectedProvince!: prizes[selectedProvince!]}
+                  : prizes;
+
+              return SingleChildScrollView(
+                child: Container(
+                  color: Colors.white,
+                  child: Padding(
+                    padding: EdgeInsets.all(10.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Chọn ngày quay số"),
+                        DropdownButton<String>(
+                          value: selectedNgay,
+                          hint: const Text('Chọn ngày'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedNgay = newValue!;
+                              // Cập nhật tỉnh đầu tiên của ngày đã chọn
+                              final updatedResult = allResults.firstWhere(
+                                (result) => result['ngay'] == selectedNgay,
+                              );
+                              final updatedProvincesList =
+                                  updatedResult['prizes'].keys.toList();
+                              selectedProvince = updatedProvincesList.first;
+                            });
+                          },
+                          items: dates.map<DropdownMenuItem<String>>(
+                            (String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            },
+                          ).toList(),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text("Chọn tỉnh/thành phố"),
+                        DropdownButton<String>(
+                          value: selectedProvince,
+                          hint: const Text('Chọn tỉnh/thành phố'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedProvince = newValue!;
+                            });
+                          },
+                          items: provincesList.map<DropdownMenuItem<String>>(
+                            (String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            },
+                          ).toList(),
+                        ),
+                        const SizedBox(height: 10),
+                        Table(
+                          border: TableBorder.all(
+                            color: const Color.fromARGB(158, 158, 158, 158),
+                          ),
+                          columnWidths: const <int, TableColumnWidth>{
+                            0: FixedColumnWidth(64),
+                            1: FlexColumnWidth(),
+                          },
+                          defaultVerticalAlignment:
+                              TableCellVerticalAlignment.middle,
+                          children: filteredPrizes.entries.expand((entry) {
+                            return entry.value!.entries
+                                .mapIndexed((index, prizeEntry) {
+                              final isEven = index % 2 == 0;
+                              final isFirstRow = index == 0;
+                              final isLastRow =
+                                  index == entry.value!.length - 1;
+
+                              return TableRow(
+                                decoration: BoxDecoration(
+                                  color:
+                                      isEven ? Colors.grey[200] : Colors.white,
+                                ),
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 50,
+                                    width: 64,
+                                    child: Center(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius:
+                                              BorderRadius.circular(5.0),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 5.0,
+                                            horizontal: 10.0,
+                                          ),
+                                          child: Text(
+                                            prizeEntry.key,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      Flexible(
-                                          flex: 2,
-                                          child: Container(
-                                            height: 40.h,
-                                            width: 40.w,
-                                            decoration: const BoxDecoration(
-                                                image: DecorationImage(
-                                                    image: AssetImage(
-                                                        "assets/images/qr-scan.png"))),
-                                          )),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    height: 10.h,
-                                  ),
-                                  DateInputWidget(
-                                      hintext: "Chọn ngày sổ",
-                                      controller: DateController,
-                                      onChanged: (z) {}),
-                                  SizedBox(
-                                    height: 10.h,
-                                  ),
-                                  CustomDropdownWidget(
-                                    selectedValue: selectedTinh,
-                                    items: const [
-                                      'Tỉnh',
-                                      'Tỉnh',
-                                      'Tỉnh',
-                                      'Tỉnh'
-                                    ],
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        selectedTinh = newValue;
-                                      });
-                                    },
-                                    hintText: 'Chọn đài',
-                                  ),
-                                  SizedBox(
-                                    height: 10.h,
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      // Handle button press
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      backgroundColor:
-                                          const Color.fromARGB(255, 255, 98, 7),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            5.0.r), // Adjust the border radius
-                                      ),
                                     ),
-                                    child: const Text(
-                                        "Dò nhanh"), // Text inside the button
+                                  ),
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    runSpacing: 10,
+                                    spacing: 40,
+                                    children: prizeEntry.value
+                                        .map((number) => Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 8.0),
+                                              child: Text(
+                                                number,
+                                                style: isFirstRow || isLastRow
+                                                    ? styleTitleBigItem
+                                                    : styleTitleSmallItem,
+                                              ),
+                                            ))
+                                        .toList(),
                                   ),
                                 ],
-                              ),
-                            ),
-                          ),
-                        )
+                              );
+                            }).toList();
+                          }).toList(),
+                        ),
                       ],
                     ),
                   ),
                 ),
-                SizedBox(
-                  height: 10.h,
-                ),
-                Padding(
-                  padding: REdgeInsets.symmetric(horizontal: 30.r),
-                  child: DateInputWidget(
-                      hintext: "Chọn ngày sổ",
-                      controller: DateController,
-                      onChanged: (z) {}),
-                ),
-                SizedBox(
-                  height: 10.h,
-                ),
-                Table(
-                  border: TableBorder.all(
-                      color: const Color.fromARGB(158, 158, 158, 158)),
-                  columnWidths: const <int, TableColumnWidth>{
-                    0: FixedColumnWidth(64),
-                    1: FlexColumnWidth(),
-                    2: FlexColumnWidth(),
-                    3: FlexColumnWidth(),
-                  },
-                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                  children: <TableRow>[
-                    TableRow(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Text(
-                              "Giải",
-                              style: TextStyle(
-                                fontSize: 20.sp,
-                                color: Colors.black,
-                              ),
-                            )),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text(
-                              textAlign: TextAlign.center,
-                              "TP Hồ Chí Minh",
-                              style: TextStyle(
-                                  fontSize: 20.sp,
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text(
-                              textAlign: TextAlign.center,
-                              "Cà Mau",
-                              style: TextStyle(
-                                  fontSize: 20.sp,
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text(
-                              textAlign: TextAlign.center,
-                              "Sóc Trăng",
-                              style: TextStyle(
-                                  fontSize: 20.sp,
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      decoration: BoxDecoration(color: Colors.grey[200]),
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(5.r)),
-                              child: Padding(
-                                padding: REdgeInsets.symmetric(
-                                    vertical: 5.h, horizontal: 10.r),
-                                child: const Text(
-                                  "G8",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text(
-                              "99",
-                              style: styleTitleBigItem,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("99", style: styleTitleBigItem),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("99", style: styleTitleBigItem),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(5.r)),
-                              child: Padding(
-                                padding: REdgeInsets.symmetric(
-                                    vertical: 5.h, horizontal: 10.r),
-                                child: const Text(
-                                  "G7",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text(
-                              "999",
-                              style: TextStyle(
-                                  fontSize: 20.sp,
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text(
-                              "999",
-                              style: TextStyle(
-                                  fontSize: 20.sp,
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text(
-                              "999",
-                              style: TextStyle(
-                                  fontSize: 25.sp,
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      decoration: BoxDecoration(color: Colors.grey[200]),
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(5.r)),
-                              child: Padding(
-                                padding: REdgeInsets.symmetric(
-                                    vertical: 5.h, horizontal: 10.r),
-                                child: const Text(
-                                  "G6",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        Container(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Text("9999", style: styleTitleSmallItem),
-                              Text("9999", style: styleTitleSmallItem),
-                              Text("9999", style: styleTitleSmallItem),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Text("9999", style: styleTitleSmallItem),
-                              Text("9999", style: styleTitleSmallItem),
-                              Text("9999", style: styleTitleSmallItem),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Text("9999", style: styleTitleSmallItem),
-                              Text("9999", style: styleTitleSmallItem),
-                              Text("9999", style: styleTitleSmallItem),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(5.r)),
-                              child: Padding(
-                                padding: REdgeInsets.symmetric(
-                                    vertical: 5.h, horizontal: 10.r),
-                                child: const Text(
-                                  "G5",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("9999", style: styleTitleSmallItem),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("9999", style: styleTitleSmallItem),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("9999", style: styleTitleSmallItem),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      decoration: BoxDecoration(color: Colors.grey[200]),
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(5.r)),
-                              child: Padding(
-                                padding: REdgeInsets.symmetric(
-                                    vertical: 5.h, horizontal: 10.r),
-                                child: const Text(
-                                  "G4",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        Container(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0.sp),
-                            child: Column(
-                              children: [
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem)
-                              ],
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0.sp),
-                            child: Column(
-                              children: [
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem)
-                              ],
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0.sp),
-                            child: Column(
-                              children: [
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem)
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(5.r)),
-                              child: Padding(
-                                padding: REdgeInsets.symmetric(
-                                    vertical: 5.h, horizontal: 10.r),
-                                child: const Text(
-                                  "G3",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        Container(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0.sp),
-                            child: Column(
-                              children: [
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0.sp),
-                            child: Column(
-                              children: [
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0.sp),
-                            child: Column(
-                              children: [
-                                Text("99999", style: styleTitleSmallItem),
-                                Text("99999", style: styleTitleSmallItem),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      decoration: BoxDecoration(color: Colors.grey[200]),
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(5.r)),
-                              child: Padding(
-                                padding: REdgeInsets.symmetric(
-                                    vertical: 5.h, horizontal: 10.r),
-                                child: const Text(
-                                  "G2",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("99999", style: styleTitleSmallItem),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("99999", style: styleTitleSmallItem),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("99999", style: styleTitleSmallItem),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(5.r)),
-                              child: Padding(
-                                padding: REdgeInsets.symmetric(
-                                    vertical: 5.h, horizontal: 10.r),
-                                child: const Text(
-                                  "G1",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("99999", style: styleTitleSmallItem),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("99999", style: styleTitleSmallItem),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text("99999", style: styleTitleSmallItem),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      decoration: BoxDecoration(color: Colors.grey[200]),
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50.h,
-                          width: 64.w,
-                          child: Container(
-                            child: Center(
-                                child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(5.r)),
-                              child: Padding(
-                                padding: REdgeInsets.symmetric(
-                                    vertical: 5.h, horizontal: 10.r),
-                                child: const Text(
-                                  "ĐB",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        TableCell(
-                          child: Container(
-                            child: Center(
-                              child: Text("999999", style: styleTitleBigItem),
-                            ),
-                          ),
-                        ),
-                        TableCell(
-                          child: Container(
-                            child: Center(
-                              child: Text("999999", style: styleTitleBigItem),
-                            ),
-                          ),
-                        ),
-                        TableCell(
-                          child: Container(
-                            child: Center(
-                              child: Text("999999", style: styleTitleBigItem),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+              );
+            }
+          },
         ),
       ),
     );

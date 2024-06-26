@@ -23,7 +23,7 @@ class KienThietHome extends StatelessWidget {
               color: Colors.grey.withOpacity(0.5),
               spreadRadius: 5,
               blurRadius: 7,
-              offset: Offset(0, 3), // changes position of shadow
+              offset: const Offset(0, 3), // changes position of shadow
             ),
           ],
         ),
@@ -36,14 +36,14 @@ class KienThietHome extends StatelessWidget {
                   Container(
                     height: 30.h,
                     width: 30.w,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                         image: DecorationImage(
                             image: AssetImage("assets/images/game.png"))),
                   ),
                   SizedBox(
                     width: 10.w,
                   ),
-                  Text(
+                  const Text(
                     "Xổ số kiến thiết",
                     style: TextStyle(
                         fontWeight: FontWeight.bold, color: Colors.black),
@@ -62,7 +62,7 @@ class KienThietHome extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => MienBacScreen()),
+                              builder: (context) => const MienBacScreen()),
                         );
                       },
                       child: const ItemHome(
@@ -81,7 +81,7 @@ class KienThietHome extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    MienTrungScreen())); // Chang
+                                    const MienTrungScreen())); // Chang
                       },
                       child: const ItemHome(
                         image: "assets/images/trung.png",
@@ -99,10 +99,10 @@ class KienThietHome extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => MienNamScreen()),
+                              builder: (context) => const MienNamScreen()),
                         );
                       },
-                      child: ItemHome(
+                      child: const ItemHome(
                         image: "assets/images/nam.png",
                         textName: "Miền Nam",
                         // colorBGIc: Colors.purple,
